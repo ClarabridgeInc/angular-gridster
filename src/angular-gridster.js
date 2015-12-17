@@ -585,6 +585,8 @@
 			this.pixelsToRows = function(pixels, ceilOrFloor) {
 				if (!this.outerMargin) {
 					pixels += this.margins[0] / 2;
+				} else {
+					pixels -= this.margins[0] / 2;
 				}
 
 				if (ceilOrFloor === true) {
