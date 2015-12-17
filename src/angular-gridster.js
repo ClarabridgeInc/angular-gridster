@@ -1051,7 +1051,7 @@
 	})
 
 	.factory('GridsterTouch', [function() {
-		return function GridsterTouch(target, startEvent, moveEvent, endEvent) {
+		return function GridsterTouch(target, startEvent, gridster, moveEvent, endEvent) {
 			var lastXYById = {};
 
 			//  Opera doesn't have Object.keys so we use this wrapper
@@ -1660,7 +1660,7 @@
 						}
 
 						for (var h = 0, hl = $dragHandles.length; h < hl; ++h) {
-							unifiedInputs[h] = new GridsterTouch($dragHandles[h], mouseDown, mouseMove, mouseUp);
+							unifiedInputs[h] = new GridsterTouch($dragHandles[h], mouseDown, gridster, mouseMove, mouseUp);
 							unifiedInputs[h].enable();
 						}
 					});
@@ -1947,7 +1947,7 @@
 						$el.append($dragHandle);
 					}
 
-					unifiedInput = new GridsterTouch($dragHandle[0], mouseDown, mouseMove, mouseUp);
+					unifiedInput = new GridsterTouch($dragHandle[0], mouseDown, gridster, mouseMove, mouseUp);
 					unifiedInput.enable();
 				};
 
