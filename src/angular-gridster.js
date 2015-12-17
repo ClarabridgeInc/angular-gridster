@@ -1421,7 +1421,7 @@
 					}
 
 					// exit, if the target has it's own click event
-					if ($target.attr('onclick') || $target.attr('ng-click')) {
+					if ($target.attr('onclick')/* || $target.attr('ng-click')*/) {
 						return false;
 					}
 
