@@ -1142,7 +1142,6 @@
 					var pageX = pointerObj.pageX;
 					var scrollOffset;
 					if (gridster.draggable.container) {
-						var container = angular.element(gridster.draggable.container)[0];
 						scrollOffset = angular.element(gridster.draggable.container).scrollTop();
 					}
 					var pageY = pointerObj.pageY + (scrollOffset ? scrollOffset : 0);
@@ -1392,9 +1391,9 @@
 					minTop = 0,
 					maxTop = 999999,
 					minLeft = 0,
-					realdocument = $document[0],
+					//realdocument = $document[0],
 					scrollContainer,
-					scrollContainerOffset = 0; 
+					scrollContainerOffset = 0;
 
 				// init scroll container, or use body if not specified
 				if (gridster.draggable.container) {
@@ -1421,7 +1420,7 @@
 					}
 
 					// exit, if the target has it's own click event
-					if ($target.attr('onclick')/* || $target.attr('ng-click')*/) {
+					if ($target.attr('onclick') /* || $target.attr('ng-click')*/ ) {
 						return false;
 					}
 
