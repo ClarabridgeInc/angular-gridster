@@ -1138,7 +1138,12 @@
 
 
 					var pageX = pointerObj.pageX;
-					var pageY = pointerObj.pageY;
+					var scrollOffset;
+					if (gridster.draggable.container) {
+						var container = angular.element(gridster.draggable.container)[0];
+						scrollOffset = angular.element(gridster.draggable.container).scrollTop();
+					}
+					var pageY = pointerObj.pageY + (scrollOffset ? scrollOffset : 0);
 
 					if (theEvtObj.type.match(/(start|down)$/i)) {
 						//  clause for processing MSPointerDown, touchstart, and mousedown
@@ -1385,7 +1390,18 @@
 					minTop = 0,
 					maxTop = 9999,
 					minLeft = 0,
-					realdocument = $document[0];
+					realdocument = $document[0],
+					scrollContainer,
+					scrollContainerOffset = 0; 
+
+				// init scroll container, or use body if not specified
+				if (gridster.draggable.container) {
+					scrollContainer = angular.element(gridster.draggable.container);
+					scrollContainerOffset = scrollContainer.offset().top;
+				}
+				if (!scrollContainer) {
+					scrollContainer = angular.element($document[0].body);
+				}
 
 				var originalCol, originalRow;
 				var inputTags = ['select', 'input', 'textarea', 'button'];
@@ -1569,16 +1585,16 @@
 						item.col = col;
 					}
 
-					if (event.pageY - realdocument.body.scrollTop < scrollSensitivity) {
-						realdocument.body.scrollTop = realdocument.body.scrollTop - scrollSpeed;
-					} else if ($window.innerHeight - (event.pageY - realdocument.body.scrollTop) < scrollSensitivity) {
-						realdocument.body.scrollTop = realdocument.body.scrollTop + scrollSpeed;
+					if (event.pageY - scrollContainer.scrollTop() - scrollContainerOffset < scrollSensitivity) {
+						scrollContainer.scrollTop(scrollContainer.scrollTop() - scrollSpeed);
+					} else if ($window.innerHeight - (event.pageY - scrollContainer.scrollTop()) < scrollSensitivity) {
+						scrollContainer.scrollTop(scrollContainer.scrollTop() + scrollSpeed);
 					}
 
-					if (event.pageX - realdocument.body.scrollLeft < scrollSensitivity) {
-						realdocument.body.scrollLeft = realdocument.body.scrollLeft - scrollSpeed;
-					} else if ($window.innerWidth - (event.pageX - realdocument.body.scrollLeft) < scrollSensitivity) {
-						realdocument.body.scrollLeft = realdocument.body.scrollLeft + scrollSpeed;
+					if (event.pageX - scrollContainer.scrollLeft() < scrollSensitivity) {
+						scrollContainer.scrollLeft(scrollContainer.scrollLeft() - scrollSpeed);
+					} else if ($window.innerWidth - (event.pageX - scrollContainer.scrollLeft()) < scrollSensitivity) {
+						scrollContainer.scrollLeft(scrollContainer.scrollLeft() + scrollSpeed);
 					}
 
 					if (hasCallback || oldRow !== item.row || oldCol !== item.col) {
