@@ -1388,7 +1388,7 @@
 					mOffY = 0,
 
 					minTop = 0,
-					maxTop = 9999,
+					maxTop = 999999,
 					minLeft = 0,
 					realdocument = $document[0],
 					scrollContainer,
@@ -1712,7 +1712,7 @@
 					mOffY = 0,
 
 					minTop = 0,
-					maxTop = 9999,
+					maxTop = 999999,
 					minLeft = 0;
 
 				var getMinHeight = function() {
