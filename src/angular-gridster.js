@@ -1451,7 +1451,7 @@
 				var originalCol, originalRow;
 				var inputTags = ['select', 'input', 'textarea', 'button'];
 
-				this.mouseDown = function(e) {
+				function mouseDown(e) {
 					if (inputTags.indexOf(e.target.nodeName.toLowerCase()) !== -1) {
 						return false;
 					}
@@ -1514,9 +1514,9 @@
 					dragStart(e);
 
 					return true;
-				};
+				}
 
-				this.mouseMove = function(e) {
+				function mouseMove(e) {
 					if (!$el.hasClass('gridster-item-moving') || $el.hasClass('gridster-item-resizing')) {
 						return false;
 					}
@@ -1573,9 +1573,9 @@
 					drag(e);
 
 					return true;
-				};
+				}
 
-				this.mouseUp = function(e) {
+				function mouseUp(e) {
 					if (!$el.hasClass('gridster-item-moving') || $el.hasClass('gridster-item-resizing')) {
 						return false;
 					}
@@ -1595,7 +1595,11 @@
 					dragStop(e);
 
 					return true;
-				};
+				}
+
+				this.mouseDown = mouseDown;
+				this.mouseMove = mouseMove;
+				this.mouseUp = mouseUp;
 
 				function dragStart(event) {
 					$el.addClass('gridster-item-moving');
@@ -1701,12 +1705,13 @@
 						item.row = row;
 						item.col = col;
 					}
-					var master = gridster.movingItem !== item;
+					var master = gridster.movingItem === item;
 
 					gridster.movingItem = null;
 					item.setPosition(item.row, item.col);
 
 					if (!master) {
+						gridster.moveOverlappingItems(item);
 						return;
 					}
 					scope.$apply(function() {
@@ -1750,7 +1755,7 @@
 						}
 
 						for (var h = 0, hl = $dragHandles.length; h < hl; ++h) {
-							unifiedInputs[h] = new GridsterTouch($dragHandles[h], this.mouseDown, gridster, this.mouseMove, this.mouseUp);
+							unifiedInputs[h] = new GridsterTouch($dragHandles[h], mouseDown, gridster, mouseMove, mouseUp);
 							unifiedInputs[h].enable();
 						}
 					});
