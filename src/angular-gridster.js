@@ -398,7 +398,7 @@
 				if (this.sparse && this.allItems.indexOf(item) === -1) {
 					this.allItems.push(item);
 				}
-				if (this.movingItem === item) {
+				if (this.movingItem === item || this.isGroupItem(item)) {
 					this.floatItemUp(item);
 				}
 				this.layoutChanged();
@@ -517,8 +517,7 @@
 					}
 					for (var colIndex = 0, len = columns.length; colIndex < len; ++colIndex) {
 						var item = columns[colIndex];
-						var inGroup = gridster.movingGroup && gridster.movingGroup.indexOf(item) !== -1;
-						if (item && !inGroup) {
+						if (item && !gridster.isGroupItem(item)) {
 							this.floatItemUp(item);
 						}
 					}
@@ -619,6 +618,10 @@
 
 				return Math.round(pixels / this.curColWidth);
 			};
+
+			this.isGroupItem = function(item) {
+				return this.movingGroup && this.movingGroup.indexOf(item) !== -1;
+			};
 		}
 	])
 
@@ -652,6 +655,36 @@
 		};
 	})
 
+	.directive('gridsterGroupPreview', function() {
+		return {
+			replace: true,
+			scope: true,
+			require: '^gridster',
+			template: '<div ng-style="previewStyle(item)" class="gridster-item gridster-preview-holder"></div>',
+			link: function(scope, $el, attrs, gridster) {
+
+				/**
+				 * @returns {Object} style object for preview element
+				 */
+				scope.previewStyle = function(item) {
+					if (!item) {
+						return {
+							display: 'none'
+						};
+					}
+
+					return {
+						display: 'block',
+						height: (item.sizeY * gridster.curRowHeight - gridster.margins[0]) + 'px',
+						width: (item.sizeX * gridster.curColWidth - gridster.margins[1]) + 'px',
+						top: (item.row * gridster.curRowHeight + (gridster.outerMargin ? gridster.margins[0] : 0)) + 'px',
+						left: (item.col * gridster.curColWidth + (gridster.outerMargin ? gridster.margins[1] : 0)) + 'px'
+					};
+				};
+			}
+		};
+	})
+
 	/**
 	 * The gridster directive
 	 *
@@ -669,7 +702,7 @@
 				controllerAs: 'gridster',
 				compile: function($tplElem) {
 
-					$tplElem.prepend('<div ng-if="gridster.movingItem" gridster-preview></div>');
+					$tplElem.prepend('<div ng-if="gridster.movingItem && !gridster.movingGroup" gridster-preview></div>' + '<div ng-if="gridster.movingGroup" ng-repeat="item in gridster.movingGroup" gridster-group-preview></div>');
 
 					return function(scope, $elem, attrs, gridster) {
 						gridster.loaded = false;
@@ -900,7 +933,7 @@
 		};
 
 		this.isMoving = function() {
-			return this.gridster.movingItem === this;
+			return this.gridster.movingItem === this || this.gridster.isGroupItem(this);
 		};
 
 		/**
@@ -1397,9 +1430,6 @@
 					scrollContainerOffset = 0;
 
 				item.draggable = this;
-				this.mouseMove = mouseMove;
-				this.mouseUp = mouseUp;
-				this.mouseDown = mouseDown;
 
 				// init scroll container, or use body if not specified
 				if (gridster.draggable.container) {
@@ -1410,20 +1440,18 @@
 					var realdocument = $document[0];
 					scrollContainer = {
 						scrollTop: function(value) {
-							return typeof value === 'undefined' ? realdocument.body.scrollTop 
-								: (realdocument.body.scrollTop = value);
+							return typeof value === 'undefined' ? realdocument.body.scrollTop : (realdocument.body.scrollTop = value);
 						},
 						scrollLeft: function(value) {
-							return typeof value === 'undefined' ? realdocument.body.scrollLeft 
-								: (realdocument.body.scrollLeft = value);
+							return typeof value === 'undefined' ? realdocument.body.scrollLeft : (realdocument.body.scrollLeft = value);
 						}
-					}
+					};
 				}
 
 				var originalCol, originalRow;
 				var inputTags = ['select', 'input', 'textarea', 'button'];
 
-				function mouseDown(e) {
+				this.mouseDown = function(e) {
 					if (inputTags.indexOf(e.target.nodeName.toLowerCase()) !== -1) {
 						return false;
 					}
@@ -1466,7 +1494,9 @@
 							});
 						}
 						gridster.movingGroup.forEach(function(slave) {
-							slave !== item && slave.draggable.mouseDown(e);
+							if (slave !== item) {
+								slave.draggable.mouseDown(e);
+							}
 						});
 					}
 
@@ -1484,16 +1514,18 @@
 					dragStart(e);
 
 					return true;
-				}
+				};
 
-				function mouseMove(e) {
+				this.mouseMove = function(e) {
 					if (!$el.hasClass('gridster-item-moving') || $el.hasClass('gridster-item-resizing')) {
 						return false;
 					}
 
 					if (gridster.movingItem === item && item.group) {
 						gridster.movingGroup.forEach(function(slave) {
-							slave !== item && slave.draggable.mouseMove(e);
+							if (slave !== item) {
+								slave.draggable.mouseMove(e);
+							}
 						});
 					}
 
@@ -1541,18 +1573,21 @@
 					drag(e);
 
 					return true;
-				}
+				};
 
-				function mouseUp(e) {
+				this.mouseUp = function(e) {
 					if (!$el.hasClass('gridster-item-moving') || $el.hasClass('gridster-item-resizing')) {
 						return false;
 					}
 
 					if (gridster.movingItem === item && item.group) {
-						gridster.movingGroup.forEach(function(slave) {
-							slave !== item && slave.draggable.mouseUp(e);
-						});
+						var group = gridster.movingGroup;
 						gridster.movingGroup = null;
+						group.forEach(function(slave) {
+							if (slave !== item) {
+								slave.draggable.mouseUp(e);
+							}
+						});
 					}
 
 					mOffX = mOffY = 0;
@@ -1560,12 +1595,13 @@
 					dragStop(e);
 
 					return true;
-				}
+				};
 
 				function dragStart(event) {
 					$el.addClass('gridster-item-moving');
-					if (gridster.movingItem !== item)
+					if (gridster.movingItem !== item) {
 						return;
+					}
 
 					gridster.updateHeight(item.sizeY);
 					scope.$apply(function() {
@@ -1645,8 +1681,9 @@
 						scrollContainer.scrollLeft(scrollLeft + scrollSpeed);
 					}
 
-					if (gridster.movingItem !== item)
+					if (gridster.movingItem !== item) {
 						return;
+					}
 					if (hasCallback || oldRow !== item.row || oldCol !== item.col) {
 						scope.$apply(function() {
 							if (hasCallback) {
@@ -1669,8 +1706,9 @@
 					gridster.movingItem = null;
 					item.setPosition(item.row, item.col);
 
-					if (!master)
+					if (!master) {
 						return;
+					}
 					scope.$apply(function() {
 						if (gridster.draggable && gridster.draggable.stop) {
 							gridster.draggable.stop(event, $el, itemOptions, item);
@@ -1712,7 +1750,7 @@
 						}
 
 						for (var h = 0, hl = $dragHandles.length; h < hl; ++h) {
-							unifiedInputs[h] = new GridsterTouch($dragHandles[h], mouseDown, gridster, mouseMove, mouseUp);
+							unifiedInputs[h] = new GridsterTouch($dragHandles[h], this.mouseDown, gridster, this.mouseMove, this.mouseUp);
 							unifiedInputs[h].enable();
 						}
 					});

@@ -54,11 +54,17 @@ angular.module('app')
 			}
 		};
 
-		var connections = [1,6,8];
+		var connections = [1, 6, 8];
 		for (var i = 0; i < 6; i++) {
 			for (var j = 0; j < 4; j++) {
-				widgets.push({col:i * 2, row:j, sizeY: 1, sizeX: 2, name: 'Widget ' + (i * 6 + j), 
-					group: connections.indexOf(i*6+j) != -1 ? 1 : undefined});
+				widgets.push({
+					col: i * 2,
+					row: j,
+					sizeY: 1,
+					sizeX: 2,
+					name: 'Widget ' + (i * 6 + j),
+					group: connections.indexOf(i * 6 + j) != -1 ? 1 : undefined
+				});
 			}
 		}
 
