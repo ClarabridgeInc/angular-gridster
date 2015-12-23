@@ -717,7 +717,7 @@
 							return ele.style.visibility !== 'hidden' && ele.style.display !== 'none';
 						};
 
-						function refresh(config) {
+						function refresh(config, width) {
 							gridster.setOptions(config);
 
 							if (!isVisible($elem[0])) {
@@ -726,7 +726,7 @@
 
 							// resolve "auto" & "match" values
 							if (gridster.width === 'auto') {
-								gridster.curWidth = $elem[0].offsetWidth || parseInt($elem.css('width'), 10);
+								gridster.curWidth = width || $elem[0].offsetWidth || parseInt($elem.css('width'), 10);
 							} else {
 								gridster.curWidth = gridster.width;
 							}
@@ -839,8 +839,8 @@
 							if (gridster.loaded) {
 								$elem.removeClass('gridster-loaded');
 							}
-
-							refresh();
+							// we add current width, as it may be different after hiding widgets (due to scrollbar)
+							refresh(undefined, width);
 
 							if (gridster.loaded) {
 								$elem.addClass('gridster-loaded');
