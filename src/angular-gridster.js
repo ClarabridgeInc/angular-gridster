@@ -1688,7 +1688,8 @@
 					if (gridster.movingItem !== item) {
 						return;
 					}
-					if (hasCallback || oldRow !== item.row || oldCol !== item.col) {
+
+					if ( /*hasCallback || */ oldRow !== item.row || oldCol !== item.col) {
 						scope.$apply(function() {
 							if (hasCallback) {
 								gridster.draggable.drag(event, $el, itemOptions, item);
@@ -2007,7 +2008,7 @@
 					}
 					var isChanged = item.row !== oldRow || item.col !== oldCol || item.sizeX !== oldSizeX || item.sizeY !== oldSizeY;
 
-					if (hasCallback || isChanged) {
+					if ( /*hasCallback || */ isChanged) {
 						scope.$apply(function() {
 							if (hasCallback) {
 								gridster.resizable.resize(e, $el, itemOptions, item); // options is the item model
