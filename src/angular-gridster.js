@@ -947,9 +947,9 @@
 		 * @param {Number} column
 		 */
 		this.setPosition = function(row, column, ignoreItems) {
-			if (this.gridster) {
-				this.gridster.putItem(this, row, column, ignoreItems);
-			}
+			if (!this.gridster)
+				return;
+			this.gridster.putItem(this, row, column, ignoreItems);
 
 			if (!this.isMoving()) {
 				this.setElementPosition();
