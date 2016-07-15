@@ -711,6 +711,10 @@
 
 						scope.gridster = gridster;
 
+						$elem[0].gridsterScope = function() {
+							return scope;
+						};
+
 						$elem.addClass('gridster');
 
 						var isVisible = function(ele) {
