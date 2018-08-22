@@ -533,6 +533,9 @@
 				if (this.floating === false) {
 					return;
 				}
+
+				var pageBreakWidget = _.findWhere($scope.widgets, { name: 'page_break' });
+
 				var colIndex = item.col,
 					sizeY = item.sizeY,
 					sizeX = item.sizeX,
@@ -540,7 +543,11 @@
 					bestColumn = null,
 					rowIndex = item.row - 1;
 
-				while (rowIndex > -1) {
+				var topRowIndex = isFalse($scope.editMode) && !isEmpty(pageBreakWidget) && pageBreakWidget.posY > 0
+					? pageBreakWidget.posY - 1
+					: -1;
+
+				while (rowIndex > topRowIndex) {
 					var items = this.getItems(rowIndex, colIndex, sizeX, sizeY, item);
 					if (items.length !== 0) {
 						break;
@@ -549,6 +556,7 @@
 					bestColumn = colIndex;
 					--rowIndex;
 				}
+
 				if (bestRow !== null) {
 					this.putItem(item, bestRow, bestColumn);
 				}
