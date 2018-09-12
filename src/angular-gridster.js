@@ -533,14 +533,25 @@
 				if (this.floating === false) {
 					return;
 				}
+		
+				var pageBreakWidgetPosition = this.floatingSettings
+					&& this.floatingSettings.getPageBreakPosition();
+		
+				var editMode = this.floatingSettings
+					&& this.floatingSettings.isEditMode();
+		
 				var colIndex = item.col,
 					sizeY = item.sizeY,
 					sizeX = item.sizeX,
 					bestRow = null,
 					bestColumn = null,
 					rowIndex = item.row - 1;
-
-				while (rowIndex > -1) {
+		
+				var topRowIndex = !editMode && pageBreakWidgetPosition > 0
+					? pageBreakWidgetPosition - 1
+					: -1;
+		
+				while (rowIndex > topRowIndex) {
 					var items = this.getItems(rowIndex, colIndex, sizeX, sizeY, item);
 					if (items.length !== 0) {
 						break;
@@ -549,6 +560,7 @@
 					bestColumn = colIndex;
 					--rowIndex;
 				}
+		
 				if (bestRow !== null) {
 					this.putItem(item, bestRow, bestColumn);
 				}
