@@ -554,6 +554,14 @@
 				while (rowIndex > topRowIndex) {
 					var items = this.getItems(rowIndex, colIndex, sizeX, sizeY, item);
 					if (items.length !== 0) {
+						if (pageBreakWidgetPosition > 0 
+							&& rowIndex > pageBreakWidgetPosition
+							&& !item.$element.hasClass('PAGE_BREAK')
+							&& bestRow != null) {
+							var offset = editMode ? 1 : 0;
+							var nextPageBreakPosition = Math.ceil(rowIndex / pageBreakWidgetPosition) * pageBreakWidgetPosition + offset;
+							bestRow = nextPageBreakPosition - rowIndex - 1 >= sizeY ? rowIndex + 1 : nextPageBreakPosition;
+						}
 						break;
 					}
 					bestRow = rowIndex;
