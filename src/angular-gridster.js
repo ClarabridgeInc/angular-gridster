@@ -1248,7 +1248,9 @@
 						};
 
 						// IE pointer model
-						if (target.msSetPointerCapture && prevent) {
+						if (target.setPointerCapture && prevent) {
+							target.setPointerCapture(pointerId);
+						} else if (target.msSetPointerCapture && prevent) {
 							target.msSetPointerCapture(pointerId);
 						} else if (theEvtObj.type === 'mousedown' && numberOfKeys(lastXYById) === 1) {
 							if (useSetReleaseCapture) {
@@ -1297,7 +1299,9 @@
 						//  in the Microsoft pointer model, release the capture for this pointer
 						//  in the mouse model, release the capture or remove document-level event handlers if there are no down points
 						//  nothing is required for the iOS touch model because capture is implied on touchstart
-						if (target.msReleasePointerCapture) {
+						if (target.releasePointerCapture) {
+							target.releasePointerCapture(pointerId);
+						} else if (target.msReleasePointerCapture) {
 							target.msReleasePointerCapture(pointerId);
 						} else if (theEvtObj.type === 'mouseup' && numberOfKeys(lastXYById) === 0) {
 							if (useSetReleaseCapture) {
@@ -1331,7 +1335,26 @@
 
 			this.enable = function() {
 
-				if (window.navigator.msPointerEnabled) {
+				if (window.navigator.pointerEnabled) {
+					//  Microsoft IE 11 pointer model
+					target.addEventListener('pointerdown', doEvent, false);
+					target.addEventListener('pointermove', doEvent, false);
+					target.addEventListener('pointerup', doEvent, false);
+					target.addEventListener('pointercancel', doEvent, false);
+
+					//  css way to prevent panning in our target area
+					if (typeof target.style.msContentZooming !== 'undefined') {
+						contentZooming = target.style.msContentZooming;
+						target.style.msContentZooming = 'none';
+					}
+
+					//  new in Windows Consumer Preview: css way to prevent all built-in touch actions on our target
+					//  without this, you cannot touch draw on the element because IE will intercept the touch events
+					if (typeof target.style.touchAction !== 'undefined') {
+						msTouchAction = target.style.touchAction;
+						target.style.touchAction = 'none';
+					}
+				} else if (window.navigator.msPointerEnabled) {
 					//  Microsoft pointer model
 					target.addEventListener('MSPointerDown', doEvent, false);
 					target.addEventListener('MSPointerMove', doEvent, false);
@@ -1390,7 +1413,23 @@
 			};
 
 			this.disable = function() {
-				if (window.navigator.msPointerEnabled) {
+				if (window.navigator.pointerEnabled) {
+					//  Microsoft pointer model
+					target.removeEventListener('pointerdown', doEvent, false);
+					target.removeEventListener('pointermove', doEvent, false);
+					target.removeEventListener('pointerup', doEvent, false);
+					target.removeEventListener('pointercancel', doEvent, false);
+
+					//  reset zooming to saved value
+					if (contentZooming) {
+						target.style.msContentZooming = contentZooming;
+					}
+
+					// reset touch action setting
+					if (msTouchAction) {
+						target.style.touchAction = msTouchAction;
+					}
+				} else if (window.navigator.msPointerEnabled) {
 					//  Microsoft pointer model
 					target.removeEventListener('MSPointerDown', doEvent, false);
 					target.removeEventListener('MSPointerMove', doEvent, false);
