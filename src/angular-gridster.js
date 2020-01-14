@@ -539,6 +539,8 @@
 		
 				var editMode = this.floatingSettings
 					&& this.floatingSettings.isEditMode();
+				var newPageBreak = this.floatingSettings
+					&& this.floatingSettings.newPageBreak;
 		
 				var colIndex = item.col,
 					sizeY = item.sizeY,
@@ -554,7 +556,8 @@
 				while (rowIndex > topRowIndex) {
 					var items = this.getItems(rowIndex, colIndex, sizeX, sizeY, item);
 					if (items.length !== 0) {
-						if (pageBreakWidgetPosition > 0 
+						if (newPageBreak
+							&& pageBreakWidgetPosition > 0 
 							&& rowIndex > pageBreakWidgetPosition
 							&& !item.$element.hasClass('PAGE_BREAK')
 							&& bestRow != null) {
