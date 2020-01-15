@@ -540,7 +540,7 @@
 				var editMode = this.floatingSettings
 					&& this.floatingSettings.isEditMode();
 				var newPageBreak = this.floatingSettings
-					&& this.floatingSettings.newPageBreak;
+					&& this.floatingSettings.isNewPageBreak();
 		
 				var colIndex = item.col,
 					sizeY = item.sizeY,
