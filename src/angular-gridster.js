@@ -758,7 +758,7 @@
 				compile: function($tplElem) {
 
 					$tplElem.prepend('<div ng-if="gridster.movingItem && !gridster.movingGroup" gridster-preview></div>'
-						+ '<div ng-if="gridster.dropIndicator && !gridster.movingGroup" gridster-drop-indicator></div>'
+						+ '<div ng-if="gridster.dropIndicator" gridster-drop-indicator></div>'
 						+ '<div ng-if="gridster.movingGroup" ng-repeat="item in gridster.movingGroup" gridster-group-preview></div>');
 
 					return function(scope, $elem, attrs, gridster) {
@@ -1585,14 +1585,6 @@
 					if (!gridster.movingItem) {
 						gridster.movingItem = item;
 					}
-					if (!gridster.dropIndicator) {
-						gridster.dropIndicator = {
-							sizeX: item.sizeX,
-							col: item.col,
-							row: item.row,
-							hasItemsInTheWay: false
-						};
-					}
 
 					if (gridster.movingItem === item && item.group) {
 						if (!gridster.movingGroup) {
@@ -1605,6 +1597,16 @@
 								slave.draggable.mouseDown(e);
 							}
 						});
+					}
+					
+					if (gridster.pushOnDrop && !gridster.dropIndicator 
+						&& (!gridster.movingGroup || gridster.movingGroup.length === 1)) {
+						gridster.dropIndicator = {
+							sizeX: item.sizeX,
+							col: item.col,
+							row: item.row,
+							hasItemsInTheWay: false
+						};
 					}
 
 					lastMouseX = e.pageX;
@@ -1776,11 +1778,12 @@
 					if ((gridster.pushing && !gridster.pushOnDrop) || !hasItemsInTheWay) {
 						item.row = row;
 						item.col = col;
-						gridster.dropIndicator.hasItemsInTheWay = false;
-					} else if (gridster.pushOnDrop) {
+					} else if (gridster.dropIndicator) {
 						gridster.dropIndicator.row = getDropRowCandidate(row, itemsInTheWay);
 						gridster.dropIndicator.col = col;
-						gridster.dropIndicator.hasItemsInTheWay = gridster.dropIndicator.row !== row;
+					}
+					if (gridster.dropIndicator) {
+						gridster.dropIndicator.hasItemsInTheWay = hasItemsInTheWay;
 					}
 
 					var scrollTop = scrollContainer.scrollTop();
@@ -1840,15 +1843,20 @@
 						|| gridster.getItems(row, col, item.sizeX, item.sizeY, item).length === 0) {
 						item.row = row;
 						item.col = col;
-					} else if (gridster.pushOnDrop) {
+					} else if (gridster.dropIndicator) {
 						item.row = gridster.dropIndicator.row;
 						item.col = gridster.dropIndicator.col;
 					}
 					var master = gridster.movingItem === item;
+					var needFloatUp = !!gridster.dropIndicator;
 
 					gridster.movingItem = null;
 					gridster.dropIndicator = null;
 					item.setPosition(item.row, item.col);
+
+					if (needFloatUp) {
+						gridster.layoutChanged();
+					}
 
 					if (!master) {
 						gridster.moveOverlappingItems(item);
