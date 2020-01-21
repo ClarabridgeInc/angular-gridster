@@ -23,6 +23,7 @@
 	.constant('gridsterConfig', {
 		columns: 6, // number of columns in the grid
 		pushing: true, // whether to push other items out of the way
+		pushOnDrop: false, // show a line for a target position, push only when dropped and if there enough space
 		floating: true, // whether to automatically float items up so they stack
 		swapping: false, // whether or not to have items switch places instead of push down if they are the same size
 		width: 'auto', // width of the grid. "auto" will expand the grid to its parent container
@@ -507,7 +508,7 @@
 			 * Moves all items up as much as possible
 			 */
 			this.floatItemsUp = function() {
-				if (this.floating === false) {
+				if (this.floating === false || (this.pushOnDrop && gridster.movingItem)) {
 					return;
 				}
 				for (var rowIndex = 0, l = this.grid.length; rowIndex < l; ++rowIndex) {
@@ -678,6 +679,37 @@
 		};
 	})
 
+	.directive('gridsterDropIndicator', function() {
+		return {
+			replace: true,
+			scope: true,
+			require: '^gridster',
+			template: '<div ng-style="previewStyle()" class="gridster-item gridster-preview-line"></div>',
+			link: function(scope, $el, attrs, gridster) {
+
+				/**
+				 * @returns {Object} style object for preview element
+				 */
+				scope.previewStyle = function() {
+					// do not show if normal placeholder fits into available space
+					if (!gridster.pushOnDrop || !gridster.dropIndicator || !gridster.dropIndicator.hasItemsInTheWay) {
+						return {
+							display: 'none'
+						};
+					}
+
+					return {
+						display: 'block',
+						height: '4px',
+						width: (gridster.dropIndicator.sizeX * gridster.curColWidth - gridster.margins[1]) + 'px',
+						top: (gridster.dropIndicator.row * gridster.curRowHeight + (gridster.outerMargin ? gridster.margins[0] / 2 : 0)) + 'px',
+						left: (gridster.dropIndicator.col * gridster.curColWidth + (gridster.outerMargin ? gridster.margins[1] : 0)) + 'px'
+					};
+				};
+			}
+		};
+	})
+
 	.directive('gridsterGroupPreview', function() {
 		return {
 			replace: true,
@@ -725,7 +757,9 @@
 				controllerAs: 'gridster',
 				compile: function($tplElem) {
 
-					$tplElem.prepend('<div ng-if="gridster.movingItem && !gridster.movingGroup" gridster-preview></div>' + '<div ng-if="gridster.movingGroup" ng-repeat="item in gridster.movingGroup" gridster-group-preview></div>');
+					$tplElem.prepend('<div ng-if="gridster.movingItem && !gridster.movingGroup" gridster-preview></div>'
+						+ '<div ng-if="gridster.dropIndicator && !gridster.movingGroup" gridster-drop-indicator></div>'
+						+ '<div ng-if="gridster.movingGroup" ng-repeat="item in gridster.movingGroup" gridster-group-preview></div>');
 
 					return function(scope, $elem, attrs, gridster) {
 						gridster.loaded = false;
@@ -1551,6 +1585,14 @@
 					if (!gridster.movingItem) {
 						gridster.movingItem = item;
 					}
+					if (!gridster.dropIndicator) {
+						gridster.dropIndicator = {
+							sizeX: item.sizeX,
+							col: item.col,
+							row: item.row,
+							hasItemsInTheWay: false
+						};
+					}
 
 					if (gridster.movingItem === item && item.group) {
 						if (!gridster.movingGroup) {
@@ -1731,10 +1773,14 @@
 						}
 					}
 
-					if (gridster.pushing !== false || !hasItemsInTheWay) {
+					if ((gridster.pushing && !gridster.pushOnDrop) || !hasItemsInTheWay) {
 						item.row = row;
 						item.col = col;
+					} else if (gridster.pushOnDrop) {
+						gridster.dropIndicator.row = getDropRowCandidate(row, itemsInTheWay);
+						gridster.dropIndicator.col = col;
 					}
+					gridster.dropIndicator.hasItemsInTheWay = hasItemsInTheWay;
 
 					var scrollTop = scrollContainer.scrollTop();
 					if (event.pageY - scrollTop - scrollContainerOffset < scrollSensitivity) {
@@ -1763,17 +1809,41 @@
 					}
 				}
 
+				function getDropRowCandidate(row, itemsInTheWay) {
+					var boundingBox = { // treating all items as a big rectangle
+						top: null, 
+						bottom: null
+					};
+					for (var i = 0; i < itemsInTheWay.length; i++) {
+						var overlap = itemsInTheWay[i];
+						if (overlap.row > row) // ignore items below the line (captured by moving item's height)
+							continue;
+						if (boundingBox.top === null || boundingBox.top > overlap.row)
+							boundingBox.top = overlap.row;
+						if (boundingBox.bottom === null || boundingBox.bottom < overlap.row + overlap.sizeY)
+							boundingBox.bottom = overlap.row + overlap.sizeY;
+					}
+					if (row - boundingBox.top > (boundingBox.bottom - boundingBox.top) / 2)
+						return boundingBox.bottom;
+					else return boundingBox.top;
+				}
+
 				function dragStop(event) {
 					$el.removeClass('gridster-item-moving');
 					var row = gridster.pixelsToRows(elmY);
 					var col = gridster.pixelsToColumns(elmX);
-					if (gridster.pushing !== false || gridster.getItems(row, col, item.sizeX, item.sizeY, item).length === 0) {
+					if ((gridster.pushing && !gridster.pushOnDrop) 
+						|| gridster.getItems(row, col, item.sizeX, item.sizeY, item).length === 0) {
 						item.row = row;
 						item.col = col;
+					} else if (gridster.pushOnDrop) {
+						item.row = gridster.dropIndicator.row;
+						item.col = gridster.dropIndicator.col;
 					}
 					var master = gridster.movingItem === item;
 
 					gridster.movingItem = null;
+					gridster.dropIndicator = null;
 					item.setPosition(item.row, item.col);
 
 					if (!master) {
