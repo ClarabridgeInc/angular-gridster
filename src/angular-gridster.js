@@ -1776,11 +1776,12 @@
 					if ((gridster.pushing && !gridster.pushOnDrop) || !hasItemsInTheWay) {
 						item.row = row;
 						item.col = col;
+						gridster.dropIndicator.hasItemsInTheWay = false;
 					} else if (gridster.pushOnDrop) {
 						gridster.dropIndicator.row = getDropRowCandidate(row, itemsInTheWay);
 						gridster.dropIndicator.col = col;
+						gridster.dropIndicator.hasItemsInTheWay = gridster.dropIndicator.row !== row;
 					}
-					gridster.dropIndicator.hasItemsInTheWay = hasItemsInTheWay;
 
 					var scrollTop = scrollContainer.scrollTop();
 					if (event.pageY - scrollTop - scrollContainerOffset < scrollSensitivity) {
@@ -1809,6 +1810,7 @@
 					}
 				}
 
+				// can return null if all overlapping items are below the line
 				function getDropRowCandidate(row, itemsInTheWay) {
 					var boundingBox = { // treating all items as a big rectangle
 						top: null, 
@@ -1823,6 +1825,8 @@
 						if (boundingBox.bottom === null || boundingBox.bottom < overlap.row + overlap.sizeY)
 							boundingBox.bottom = overlap.row + overlap.sizeY;
 					}
+					if (boundingBox.top === null)
+						return row;
 					if (row - boundingBox.top > (boundingBox.bottom - boundingBox.top) / 2)
 						return boundingBox.bottom;
 					else return boundingBox.top;
