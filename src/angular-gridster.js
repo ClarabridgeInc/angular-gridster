@@ -784,7 +784,7 @@
 
 					$tplElem.prepend('<div ng-if="gridster.movingItem && !gridster.movingGroup" ng-class="gridster.resizingItem ? \'\' : \'with-icon\'" gridster-preview></div>'
 						+ '<div ng-if="gridster.dropIndicator" gridster-drop-indicator></div>'
-						+ '<div ng-if="gridster.movingGroup" ng-repeat="item in gridster.movingGroup" gridster-group-preview></div>'
+						+ '<div ng-if="gridster.movingGroup" ng-class="gridster.resizingItem ? \'\' : \'with-icon\'" ng-repeat="item in gridster.movingGroup" gridster-group-preview></div>'
 						+ '<div ng-if="gridster.placeholder" gridster-placeholder></div>');
 
 					return function(scope, $elem, attrs, gridster) {
