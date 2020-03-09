@@ -740,6 +740,31 @@
 		};
 	})
 
+	.directive('gridsterPlaceholder', function() {
+		return {
+			replace: true,
+			scope: true,
+			require: '^gridster',
+			template: '<div ng-style="placeholderStyle()" class="gridster-item gridster-placeholder"></div>',
+			link: function(scope, $el, attrs, gridster) {
+				scope.placeholderStyle = function() {
+					if (!gridster.pushOnDrop || !gridster.placeholder) {
+						return {
+							display: 'none'
+						};
+					}
+					return {
+						display: 'block',
+						height: (gridster.placeholder.sizeY * gridster.curRowHeight - gridster.margins[0]) + 'px',
+						width: (gridster.placeholder.sizeX * gridster.curColWidth - gridster.margins[1]) + 'px',
+						top: (gridster.placeholder.row * gridster.curRowHeight + (gridster.outerMargin ? gridster.margins[0] : 0)) + 'px',
+						left: (gridster.placeholder.col * gridster.curColWidth + (gridster.outerMargin ? gridster.margins[1] : 0)) + 'px'
+					};
+				};
+			}
+		};
+	})
+
 	/**
 	 * The gridster directive
 	 *
@@ -757,9 +782,10 @@
 				controllerAs: 'gridster',
 				compile: function($tplElem) {
 
-					$tplElem.prepend('<div ng-if="gridster.movingItem && !gridster.movingGroup" gridster-preview></div>'
+					$tplElem.prepend('<div ng-if="gridster.movingItem && !gridster.movingGroup" ng-class="gridster.resizingItem ? \'\' : \'with-icon\'" gridster-preview></div>'
 						+ '<div ng-if="gridster.dropIndicator" gridster-drop-indicator></div>'
-						+ '<div ng-if="gridster.movingGroup" ng-repeat="item in gridster.movingGroup" gridster-group-preview></div>');
+						+ '<div ng-if="gridster.movingGroup" ng-class="gridster.resizingItem ? \'\' : \'with-icon\'" ng-repeat="item in gridster.movingGroup" gridster-group-preview></div>'
+						+ '<div ng-if="gridster.placeholder" gridster-placeholder></div>');
 
 					return function(scope, $elem, attrs, gridster) {
 						gridster.loaded = false;
@@ -1609,6 +1635,16 @@
 						};
 					}
 
+					if (gridster.pushOnDrop && !gridster.placeholder 
+						&& (!gridster.movingGroup || gridster.movingGroup.length === 1)) {
+						gridster.placeholder = {
+							sizeX: item.sizeX,
+							sizeY: item.sizeY,
+							col: item.col,
+							row: item.row
+						};
+					}
+
 					lastMouseX = e.pageX;
 					lastMouseY = e.pageY;
 
@@ -1852,6 +1888,7 @@
 
 					gridster.movingItem = null;
 					gridster.dropIndicator = null;
+					gridster.placeholder = null;
 					item.setPosition(item.row, item.col);
 
 					if (needFloatUp) {
@@ -2011,6 +2048,7 @@
 					$el.addClass('gridster-item-resizing');
 
 					gridster.movingItem = item;
+					gridster.resizingItem = item;
 
 					item.setElementSizeX();
 					item.setElementSizeY();
@@ -2169,10 +2207,15 @@
 					$el.removeClass('gridster-item-resizing');
 
 					gridster.movingItem = null;
+					gridster.resizingItem = null;
 
 					item.setPosition(item.row, item.col);
 					item.setSizeY(item.sizeY);
 					item.setSizeX(item.sizeX);
+
+					if (gridster.pushOnDrop) {
+						gridster.layoutChanged();
+					}
 
 					scope.$apply(function() {
 						if (gridster.resizable && gridster.resizable.stop) {
