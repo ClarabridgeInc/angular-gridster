@@ -1724,18 +1724,26 @@
 						}
 						gridster.placeholders = gridster.movingGroup.map(getPlaceholder);
 						if (gridster.pushOnDrop && gridster.movingGroup.length > 1) {
-							gridster.clusterItems(item, gridster.movingGroup);
-							// to wait for widget clustering
 							$timeout(function() {
-								gridster.movingGroup.forEach(function(slave) {
-									if (slave !== item) {
-										slave.draggable.mouseDown(e);
+								// temporary fix to distinguish mouse click and drag
+								if (gridster.movingItem === item) {
+									gridster.clusterItems(item, gridster.movingGroup);
+								}
+							}, 250).then(function() {
+								// to wait for widget clustering
+								return $timeout(function() {
+									if (gridster.movingGroup) {
+										gridster.movingGroup.forEach(function(slave) {
+											if (slave !== item) {
+												slave.draggable.mouseDown(e);
+											}
+										});
+										var boundingBox = gridster.getElementBoundingBox(gridster.movingGroup);
+										gridster.dropIndicator = getDropIndicator(boundingBox);
+										gridster.masterRowOffsetInGroup = item.row - boundingBox.row;
 									}
-								});
-								var boundingBox = gridster.getElementBoundingBox(gridster.movingGroup);
-								gridster.dropIndicator = getDropIndicator(boundingBox);
-								gridster.masterRowOffsetInGroup = item.row - boundingBox.row;
-							}, 300);
+								}, 300);
+							});
 						} else {
 							gridster.movingGroup.forEach(function(slave) {
 								if (slave !== item) {
@@ -1849,7 +1857,7 @@
 				}
 
 				function mouseUp(e, isGroup) {
-					if (!$el.hasClass('gridster-item-moving') || $el.hasClass('gridster-item-resizing')) {
+					if (!isGroup && !$el.hasClass('gridster-item-moving') || $el.hasClass('gridster-item-resizing')) {
 						return false;
 					}
 
@@ -2068,7 +2076,7 @@
 					$el.removeClass('gridster-item-moving');
 					var row = gridster.pixelsToRows(elmY);
 					var col = gridster.pixelsToColumns(elmX);
-					if (gridster.dropIndicator.hasItemsInTheWay) {
+					if (gridster.dropIndicator && gridster.dropIndicator.hasItemsInTheWay) {
 						item.row = gridster.dropIndicator.row;
 						item.col = col;
 					} else {
