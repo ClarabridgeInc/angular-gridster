@@ -604,6 +604,10 @@
 				});
 			};
 
+			this.isNewGroupDrag = function() {
+				return gridster.pushOnDrop && gridster.movingGroup && gridster.movingGroup.length > 1;
+			}
+
 			/**
 			 * Moves all items up as much as possible
 			 */
@@ -1133,6 +1137,9 @@
 			if (!this.gridster) {
 				return;
 			}
+			// skip when clustering widgets while dragging as a group
+			if (this.gridster.isNewGroupDrag())
+				return;
 			this.gridster.putItem(this, row, column, ignoreItems);
 
 			if (!this.isMoving()) {
@@ -1902,7 +1909,13 @@
 					gridster.updateHeight(item.sizeY);
 					scope.$apply(function() {
 						if (gridster.draggable && gridster.draggable.start) {
-							gridster.draggable.start(event, $el, itemOptions, item);
+							if (gridster.isNewGroupDrag()) {
+								gridster.movingGroup.forEach(function(groupItem) {
+									gridster.draggable.start(event, $el, itemOptions, groupItem);
+								});
+							} else {
+								gridster.draggable.start(event, $el, itemOptions, item);
+							}
 						}
 					});
 				}
@@ -1918,7 +1931,7 @@
 					var col = gridster.pixelsToColumns(elmX);
 
 					var itemsInTheWay = [];
-					if (gridster.pushOnDrop && gridster.movingGroup && gridster.movingGroup.length > 1) {
+					if (gridster.isNewGroupDrag()) {
 						var box = gridster.getElementBoundingBox(gridster.movingGroup);
 						itemsInTheWay = gridster.getItems(box.row, box.col, box.sizeX, box.sizeY, gridster.movingGroup);
 					} else {
@@ -1968,7 +1981,7 @@
 						item.row = row;
 						item.col = col;
 					} else if (gridster.dropIndicator) {
-						if (gridster.pushOnDrop && gridster.movingGroup && gridster.movingGroup.length > 1) {
+						if (gridster.isNewGroupDrag()) {
 							var box = gridster.getElementBoundingBox(gridster.movingGroup);
 							gridster.dropIndicator.row = getDropRowCandidate(box.row, itemsInTheWay);
 							gridster.dropIndicator.col = box.col;
@@ -2061,13 +2074,24 @@
 						gridster.layoutChanged();
 					}
 
-					if (!master || gridster.pushOnDrop) {
+					if (!master) {
 						gridster.moveOverlappingItems(item);
 						return;
 					}
+
+					if (gridster.pushOnDrop && item.group) {
+						gridster.allItems.forEach(function(i) {
+							if (i.group) {
+								i.setElementPosition();
+							}
+						});
+					}
+
 					scope.$apply(function() {
 						if (gridster.draggable && gridster.draggable.stop) {
-							gridster.draggable.stop(event, $el, itemOptions, item);
+							$timeout(function() {
+								gridster.draggable.stop(event, $el, itemOptions, item);
+							}, 30);
 						}
 					});
 				}
@@ -2606,9 +2630,6 @@
 					});
 
 					function positionChanged() {
-						// ignore position change when clustering widgets while dragging as a group
-						if (gridster.pushOnDrop && gridster.movingGroup && gridster.movingGroup.length > 1)
-							return;
 						// call setPosition so the element and gridster controller are updated
 						item.setPosition(item.row, item.col, gridster.movingGroup);
 
