@@ -667,7 +667,7 @@
 							&& !item.$element.hasClass('PAGE_BREAK')
 							&& bestRow != null) {
 							var offset = editMode ? 1 : 0;
-							var nextPageBreakPosition = Math.ceil(rowIndex / pageBreakWidgetPosition) * pageBreakWidgetPosition + offset;
+							var nextPageBreakPosition = Math.ceil((rowIndex + 1) / pageBreakWidgetPosition) * pageBreakWidgetPosition + offset;
 							bestRow = nextPageBreakPosition - rowIndex - 1 >= sizeY ? rowIndex + 1 : nextPageBreakPosition;
 						}
 						break;
