@@ -1752,6 +1752,7 @@
 								}, 300);
 							});
 						} else {
+							delete gridster.masterRowOffsetInGroup;
 							gridster.movingGroup.forEach(function(slave) {
 								if (slave !== item) {
 									slave.draggable.mouseDown(e);
@@ -1762,6 +1763,7 @@
 
 					if (gridster.pushOnDrop && !gridster.placeholders
 						&& (!gridster.movingGroup || gridster.movingGroup.length === 1)) {
+							delete gridster.masterRowOffsetInGroup;
 							gridster.placeholders = [getPlaceholder(item)];
 					}
 
