@@ -1052,8 +1052,14 @@
 							return isVisible($elem[0]);
 						}, onResize);
 
+						var resizeObserver;
 						// see https://github.com/sdecima/javascript-detect-element-resize
-						if (typeof window.addResizeListener === 'function') {
+						if (window.ResizeObserver) {
+							resizeObserver = new window.ResizeObserver(function() {
+								onResize();
+							});
+							resizeObserver.observe($elem[0]);
+						} else if (typeof window.addResizeListener === 'function') {
 							window.addResizeListener($elem[0], onResize);
 						} else {
 							scope.$watch(function() {
@@ -1067,7 +1073,9 @@
 						scope.$on('$destroy', function() {
 							gridster.destroy();
 							$win.off('resize', onResize);
-							if (typeof window.removeResizeListener === 'function') {
+							if (resizeObserver) {
+								resizeObserver.disconnect();
+							} else if (typeof window.removeResizeListener === 'function') {
 								window.removeResizeListener($elem[0], onResize);
 							}
 						});
